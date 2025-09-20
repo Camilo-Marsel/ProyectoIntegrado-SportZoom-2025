@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Listado de Tareas</h2>
+    <a href="{% url 'crear_tarea' %}" class="btn btn-success">+ Nueva Tarea</a>
+  </div>
+
+  <table class="table table-hover table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>Nombre</th>
+        <th>Valor Unitario</th>
+        <th>Unidad</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tarea in tareas %}
+        <tr>
+          <td>{{ tarea.nombre }}</td>
+          <td>{{ tarea.valor_unitario }}</td>
+          <td>{{ tarea.unidad }}</td>
+          <td>
+            <a href="{% url 'editar_tarea' tarea.pk %}" class="btn btn-warning btn-sm">Editar</a>
+            <a href="{% url 'eliminar_tarea' tarea.pk %}" class="btn btn-danger btn-sm">Eliminar</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="4" class="text-center">No hay tareas registradas.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

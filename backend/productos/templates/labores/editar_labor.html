@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">
+        {% if form.instance.pk %}
+          Editar Labor
+        {% else %}
+          Crear Labor
+        {% endif %}
+      </h4>
+    </div>
+    <div class="card-body">
+      <form method="POST" id="laborForm">
+        {% csrf_token %}
+
+        <!-- Campo: Finca -->
+        <div class="mb-3">
+          <label for="id_finca" class="form-label">Finca</label>
+          {{ form.finca }}
+        </div>
+
+        <!-- Campo: Trabajador (se filtrará dinámicamente por finca) -->
+        <div class="mb-3">
+          <label for="id_trabajador" class="form-label">Trabajador</label>
+          {{ form.trabajador }}
+        </div>
+
+        <!-- Campo: Lote (se llenará dinámicamente) -->
+        <div class="mb-3">
+          <label for="id_lote" class="form-label">Lote</label>
+          {{ form.lote }}
+        </div>
+
+        <!-- Campo: Fecha -->
+        <div class="mb-3">
+          <label for="id_fecha" class="form-label">Fecha</label>
+          {{ form.fecha }}
+        </div>
+
+        <!-- Campo: Cantidad (editable solo si no hay lote seleccionado) -->
+        <div class="mb-3">
+          <label for="id_cantidad" class="form-label">Cantidad</label>
+          {{ form.cantidad }}
+        </div>
+
+        <!-- Campo: Tarea -->
+        <div class="mb-3">
+          <label for="id_tarea" class="form-label">Tarea</label>
+          {{ form.tarea }}
+        </div>
+
+        <!-- Campo: Observaciones -->
+        <div class="mb-3">
+          <label for="id_observaciones" class="form-label">Observaciones</label>
+          {{ form.observaciones }}
+        </div>
+
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="{% url 'listar_labores' %}" class="btn btn-secondary ms-2">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- === SCRIPTS === -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const fincaField = document.getElementById('id_finca');
+    const loteField = document.getElementById('id_lote');
+    const trabajadorField = document.getElementById('id_trabajador');
+    const cantidadField = document.getElementById('id_cantidad');
+
+    // === Lógica para cargar Lotes por Finca ===
+    function loadLotes(fincaId) {
+      const urlBase = "{% url 'obtener_lotes_por_finca' 0 %}".replace('/0/', `/${fincaId}/`);
+      fetch(urlBase)
+        .then(response => response.json())
+        .then(data => {
+          loteField.innerHTML = '<option value="">---------</option>';
+          data.forEach(lote => {
+            const option = document.createElement('option');
+            option.value = lote.id;
+            option.textContent = lote.nombre;
+            loteField.appendChild(option);
+          });
+        });
+    }
+
+    fincaField.addEventListener('change', () => {
+      const fincaId = fincaField.value;
+
+      // Cargar trabajadores dinámicamente por finca
+      if (fincaId) {
+        fetch(`/ajax/cargar-trabajadores/?finca=${fincaId}`)
+          .then(response => response.json())
+          .then(data => {
+            trabajadorField.innerHTML = '<option value="">---------</option>';
+            data.forEach(trabajador => {
+              const option = document.createElement('option');
+              option.value = trabajador.id;
+              option.textContent = trabajador.nombre;
+              trabajadorField.appendChild(option);
+            });
+          });
+
+        loadLotes(fincaId);
+      } else {
+        loteField.innerHTML = '<option value="">---------</option>';
+        trabajadorField.innerHTML = '<option value="">---------</option>';
+        cantidadField.readOnly = false;
+        cantidadField.value = '';
+      }
+    });
+
+    // === Lógica para rellenar cantidad desde tamaño de lote ===
+    loteField.addEventListener('change', () => {
+      const loteId = loteField.value;
+      if (loteId) {
+        const urlBase = "{% url 'obtener_tamano_lote' 0 %}".replace('/0/', `/${loteId}/`);
+        fetch(urlBase)
+          .then(response => response.json())
+          .then(data => {
+            cantidadField.value = data.tamano;
+            cantidadField.readOnly = true;
+          });
+      } else {
+        cantidadField.readOnly = false;
+        cantidadField.value = '';
+      }
+    });
+
+    // Modo edición: si ya hay lote cargado, bloquear cantidad
+    if (loteField.value) {
+      cantidadField.readOnly = true;
+    }
+  });
+</script>
+{% endblock %}
