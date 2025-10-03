@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'productos',
+    'tienda.apps.TiendaConfig',
 ]
 
 MIDDLEWARE = [
@@ -133,11 +133,26 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",  
 ]
 
-# Configuración de DRF 
+# Modelo de usuario personalizado
+AUTH_USER_MODEL = 'tienda.Usuario'
+
+# Configuración de DRF + JWT
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
+
+# Configuración de JWT
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Ajusta según necesidad
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
