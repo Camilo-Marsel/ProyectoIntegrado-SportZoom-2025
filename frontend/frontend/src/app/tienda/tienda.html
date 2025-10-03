@@ -1,0 +1,85 @@
+<div class="flex min-h-screen flex-col">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center p-4 border-b">
+        <div class="text-xl font-bold">SportZoom</div>
+        <nav class="flex gap-4">
+            <button>Carrito</button>
+            <button>Pedidos</button>
+            <button>Vender</button>
+            <button class="rounded-full border p-1">👤</button>
+        </nav>
+    </header>
+
+    <!-- Body -->
+    <div class="flex flex-1 p-4 gap-4">
+
+        <!-- Filtros -->
+        <aside class="w-64 border p-4 rounded">
+            <h2 class="font-bold mb-2">Filtros</h2>
+            <input type="text" placeholder="Buscar..." [(ngModel)]="filtroNombre"
+                class="w-full border p-2 rounded mb-2 focus:outline-none focus:ring focus:ring-blue-200">
+        </aside>
+
+        <!-- Lista de productos -->
+        <main class="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+            <!-- Cargando -->
+            <p *ngIf="cargando" class="col-span-full text-center text-gray-500">
+                Cargando productos...
+            </p>
+
+            <!-- Productos -->
+            <div *ngFor="let p of filtrarProductos()" (click)="verDetalle(p)"
+                [class.border-blue-500]="productoSeleccionado === p"
+                class="border rounded-lg shadow-sm hover:shadow-md cursor-pointer transition duration-200 p-4 flex flex-col">
+
+                <!-- Imagen -->
+                <img [src]="p.imagen" [alt]="p.nombre" class="w-full h-40 object-cover rounded mb-3">
+
+                <!-- Info -->
+                <h3 class="font-semibold text-lg mb-1">{{ p.nombre }}</h3>
+                <p class="text-green-600 font-bold mb-1">
+                    {{ p.precio | currency:'COP':'symbol':'1.0-0' }}
+                </p>
+                <p class="text-gray-600 text-sm mb-2">Stock: {{ p.stock }}</p>
+
+                <!-- Botón comprar -->
+                <button (click)="agregarAlCarrito(p); $event.stopPropagation()" [disabled]="p.stock === 0"
+                    class="mt-auto w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition disabled:opacity-50">
+                    {{ p.stock > 0 ? 'Añadir al carrito' : 'Agotado' }}
+                </button>
+            </div>
+
+            <!-- Sin productos -->
+            <p *ngIf="!cargando && filtrarProductos().length === 0" class="col-span-full text-center text-gray-500">
+                No hay productos disponibles
+            </p>
+
+        </main>
+
+        <!-- Panel de detalle -->
+        <aside class="w-80 border p-4 rounded">
+            <h2 class="font-bold mb-2">Detalle del producto</h2>
+            <div *ngIf="productoSeleccionado">
+                <img [src]="productoSeleccionado.imagen" class="w-full h-48 object-cover rounded mb-3">
+                <h3 class="font-bold text-lg mb-1">{{ productoSeleccionado.nombre }}</h3>
+                <p class="text-green-600 font-bold text-lg mb-2">
+                    {{ productoSeleccionado.precio | currency:'COP':'symbol':'1.0-0' }}
+                </p>
+                <p class="text-sm mb-3">{{ productoSeleccionado.descripcion || 'Sin descripción disponible' }}</p>
+                <button (click)="agregarAlCarrito(productoSeleccionado)"
+                    class="mt-2 w-full bg-black text-white p-2 rounded hover:bg-gray-800 transition">
+                    Añadir al carrito
+                </button>
+            </div>
+            <p *ngIf="!productoSeleccionado" class="text-gray-500">Selecciona un producto para ver detalles</p>
+        </aside>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center p-4 border-t">
+        SportZoom - Todos los derechos reservados
+    </footer>
+</div>
