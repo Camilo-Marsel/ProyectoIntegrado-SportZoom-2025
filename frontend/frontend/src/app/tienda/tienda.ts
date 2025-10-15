@@ -41,7 +41,7 @@ export class TiendaComponent implements OnInit {
   this.http.get<any>('/api/productos/')
     .subscribe({
       next: res => {
-        console.log("Respuesta del backend:", res); // 👈 debug
+        console.log("Respuesta del backend:", res); // debug
         this.productos = res.results;
         this.cargando = false;
       },
