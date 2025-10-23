@@ -3,14 +3,19 @@ from .models import Producto
 from django.contrib.auth import authenticate
 
 class ProductoSerializer(serializers.ModelSerializer):
-    imagen = serializers.SerializerMethodField()
-    disponibilidad = serializers.SerializerMethodField()
+    imagen_url = serializers.SerializerMethodField(read_only=True)
+    disponibilidad = serializers.SerializerMethodField(read_only=True)
+    
 
     class Meta:
         model = Producto
-        fields = ['id', 'nombre', 'descripcion', 'precio', 'stock', 'imagen', 'disponibilidad']
+        fields = ['id', 'nombre', 'descripcion', 'precio', 'stock', 'imagen', 'imagen_url', 'disponibilidad']
+        extra_kwargs = {
+            'imagen': {'required': False, 'allow_null': True },
+        }
+        
 
-    def get_imagen(self, obj):
+    def get_imagen_url(self, obj):
         request = self.context.get('request')
         if obj.imagen:
             url = obj.imagen.url

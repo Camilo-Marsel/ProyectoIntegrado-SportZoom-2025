@@ -1,6 +1,5 @@
 from django import forms
 from .models import Labor, Tarea, Lote, Trabajador
-from fincas.models import Finca
 
 class LaborForm(forms.ModelForm):
     class Meta:
