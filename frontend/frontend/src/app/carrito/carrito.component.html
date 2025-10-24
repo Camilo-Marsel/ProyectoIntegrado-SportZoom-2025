@@ -1,0 +1,74 @@
+<div class="min-h-screen flex flex-col bg-gray-50 text-gray-800">
+  <!-- Header -->
+  <header class="flex justify-between items-center p-4 bg-white shadow-sm border-b border-gray-200">
+    <div class="text-2xl font-bold text-blue-600">🛒 Carrito de Compras</div>
+    <a routerLink="/tienda" class="text-blue-600 font-semibold hover:text-blue-700 transition">
+      ← Seguir comprando
+    </a>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="flex-1 container mx-auto p-6">
+    <div *ngIf="productos.length === 0" class="text-center text-gray-500 mt-20">
+      <p class="text-lg">Tu carrito está vacío 😔</p>
+    </div>
+
+    <div *ngIf="productos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div
+        *ngFor="let p of productos"
+        class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col hover:shadow-md transition"
+      >
+        <!-- Imagen -->
+        <div class="relative flex justify-center items-center bg-gray-50 rounded-t-xl overflow-hidden h-48">
+          <img
+            [src]="p.imagen"
+            [alt]="p.nombre"
+            class="max-h-40 w-auto object-contain transition-transform duration-300 hover:scale-105"
+          />
+        </div>
+
+        <!-- Información -->
+        <div class="p-4 flex flex-col flex-grow">
+          <h3 class="font-semibold text-lg text-gray-800 mb-1">{{ p.nombre }}</h3>
+          <p class="text-gray-500 text-sm mb-2">Código: {{ p.id }}</p>
+          <p class="text-blue-600 font-bold text-lg mb-4">
+            {{ p.precio | currency:'COP ':'symbol':'1.0-0' }}
+          </p>
+
+          <button
+            (click)="eliminar(p.id)"
+            class="mt-auto bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer
+    *ngIf="productos.length > 0"
+    class="bg-white border-t border-gray-200 shadow-inner p-5 flex flex-col sm:flex-row justify-between items-center gap-4"
+  >
+    <p class="font-semibold text-lg text-gray-700">
+      Total:
+      <span class="text-blue-600">
+        {{ total | currency:'COP ':'symbol':'1.0-0' }}
+      </span>
+    </p>
+
+    <div class="flex gap-3">
+      <button
+        (click)="vaciarCarrito()"
+        class="bg-white border border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition"
+      >
+        Vaciar carrito
+      </button>
+
+      <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+        Finalizar compra
+      </button>
+    </div>
+  </footer>
+</div>
