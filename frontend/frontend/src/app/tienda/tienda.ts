@@ -10,9 +10,12 @@ interface Producto {
   precio: number;
   stock: number;
   imagen: string;
-  disponibilidad?: string;
   descripcion?: string;
+  disponibilidad?: string;
+  marca?: string;
+  talla?: string;
 }
+
 
 
 interface Usuario {
@@ -37,16 +40,23 @@ export class TiendaComponent implements OnInit {
   productoSeleccionado: Producto | null = null;
   filtroNombre: string = '';
   cargando: boolean = false;
+  filtroMarca: string = '';
+  filtroTalla: string = '';
+  precioMin: number | null = null;
+  precioMax: number | null = null;
 
   usuario: Usuario | null = null;
 
-  productoForm: Producto = {
-    nombre: '',
-    precio: 0,
-    stock: 0,
-    imagen: '',
-    descripcion: ''
-  };
+productoForm: Producto = {
+  nombre: '',
+  precio: 0,
+  stock: 0,
+  imagen: '',
+  descripcion: '',
+  marca: '',
+  talla: ''
+};
+
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -95,6 +105,34 @@ export class TiendaComponent implements OnInit {
     );
   }
 
+  aplicarFiltros() {
+  this.cargando = true;
+  let params: any = {};
+
+  if (this.filtroNombre) params.nombre = this.filtroNombre;
+  if (this.filtroMarca) params.marca = this.filtroMarca;
+  if (this.filtroTalla) params.talla = this.filtroTalla;
+  if (this.precioMin !== null) params.precio_min = this.precioMin;
+  if (this.precioMax !== null) params.precio_max = this.precioMax;
+
+  // Espera un ciclo de render antes de hacer la petición
+  setTimeout(() => {
+    this.http.get<any>(`${this.apiUrl}/productos/`, { params })
+      .subscribe({
+        next: res => {
+          this.productos = res.results || res;
+          this.cargando = false;
+        },
+        error: err => {
+          console.error('Error al aplicar filtros', err);
+          this.cargando = false;
+        }
+      });
+  }, 0);
+}
+
+
+
   agregarAlCarrito(producto: Producto) {
     console.log('Producto añadido al carrito:', producto);
     alert(`Añadido al carrito: ${producto.nombre}`);
@@ -107,19 +145,21 @@ export class TiendaComponent implements OnInit {
   }
 
   guardarProducto() {
-    const headers = this.authService.obtenerCabeceraAuth();
+  const headers = this.authService.obtenerCabeceraAuth();
 
-    const formData = new FormData();
-    formData.append('nombre', this.productoForm.nombre ??'');
-    formData.append('descripcion', this.productoForm.descripcion ?? '');
-    formData.append('precio', String(this.productoForm.precio ??''));
-    formData.append('stock', String(this.productoForm.stock ??''));
+  const formData = new FormData();
+  formData.append('nombre', this.productoForm.nombre ?? '');
+  formData.append('descripcion', this.productoForm.descripcion ?? '');
+  formData.append('precio', String(this.productoForm.precio ?? ''));
+  formData.append('stock', String(this.productoForm.stock ?? ''));
+  formData.append('marca', this.productoForm.marca ?? '');
+  formData.append('talla', this.productoForm.talla ?? '');
 
-    if (this.selectedFile) {
-      formData.append('imagen', this.selectedFile);
-    }
+  if (this.selectedFile) {
+    formData.append('imagen', this.selectedFile);
+  }
 
-    if (this.productoForm.id) {
+  if (this.productoForm.id) {
     this.http.put(`${this.apiUrl}/productos/${this.productoForm.id}/`, formData, { headers })
       .subscribe({
         next: () => {
@@ -146,6 +186,7 @@ export class TiendaComponent implements OnInit {
       });
   }
 }
+
      
 
   editarProducto(producto: Producto) {
@@ -173,12 +214,25 @@ export class TiendaComponent implements OnInit {
   }
 
   limpiarFormulario() {
-    this.productoForm = {
-      nombre: '',
-      precio: 0,
-      stock: 0,
-      imagen: '',
-      descripcion: '',
-    };
-  }
+  this.productoForm = {
+    nombre: '',
+    precio: 0,
+    stock: 0,
+    imagen: '',
+    descripcion: '',
+    marca: '',
+    talla: ''
+  };
+}
+
+
+  limpiarFiltros() {
+  this.filtroNombre = '';
+  this.filtroMarca = '';
+  this.filtroTalla = '';
+  this.precioMin = null;
+  this.precioMax = null;
+  this.cargarProductos();
+}
+
 }

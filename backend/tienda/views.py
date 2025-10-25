@@ -9,9 +9,35 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class ProductoList(generics.ListAPIView):
-    queryset = Producto.objects.all().order_by('nombre')
     serializer_class = ProductoSerializer
-    permission_classes = [permissions.AllowAny]  
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = Producto.objects.all().order_by('nombre')
+
+        # Log inicial
+        print(">>> Request GET params:", self.request.query_params)
+
+        min_precio = self.request.query_params.get('min_precio')
+        max_precio = self.request.query_params.get('max_precio')
+        marca = self.request.query_params.get('marca')
+        talla = self.request.query_params.get('talla')
+
+        if min_precio:
+            queryset = queryset.filter(precio__gte=min_precio)
+        if max_precio:
+            queryset = queryset.filter(precio__lte=max_precio)
+        if marca:
+            queryset = queryset.filter(marca__icontains=marca)
+        if talla:
+            queryset = queryset.filter(talla__icontains=talla)
+
+        # Log después de filtrar
+        print(f">>> Filtros aplicados: marca={marca!r}, talla={talla!r}, min_precio={min_precio!r}, max_precio={max_precio!r}")
+        print(">>> Queryset SQL (preview):", str(queryset.query))
+        print(">>> Result count after filters:", queryset.count())
+
+        return queryset
 
 # VISTAS ADMINISTRATIVAS
 
@@ -62,11 +88,42 @@ class AdminLoginView(APIView):
 
 
 class ProductoViewSet(viewsets.ModelViewSet):
+    
     queryset = Producto.objects.all().order_by('nombre')
     serializer_class = ProductoSerializer
     
     def get_serializer_context(self):
         return {'request': self.request}
+    
+    def get_queryset(self):
+        queryset = Producto.objects.all().order_by('nombre')
+        
+        # Obtener los parámetros GET
+        marca = self.request.query_params.get('marca')
+        talla = self.request.query_params.get('talla')
+        min_precio = self.request.query_params.get('min_precio')
+        max_precio = self.request.query_params.get('max_precio')
+
+        #filtrar precios
+        if marca:
+            queryset = queryset.filter(marca__iexact=marca)
+        if talla:
+            queryset = queryset.filter(talla__iexact=talla)
+        if min_precio:
+            queryset = queryset.filter(precio__gte=min_precio)
+        if max_precio:
+            queryset = queryset.filter(precio__lte=max_precio)
+
+
+        # Filtro por marca si se envía
+        if marca:
+            queryset = queryset.filter(marca__iexact=marca)
+        
+        # Filtro por talla si se envía
+        if talla:
+            queryset = queryset.filter(talla__iexact=talla)
+        
+        return queryset
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
@@ -74,6 +131,8 @@ class ProductoViewSet(viewsets.ModelViewSet):
         return [permissions.AllowAny()]
     
     def create(self, request, *args, **kwargs):
+        print("Usuario autenticado:", request.user)
+        print("Es admin:", getattr(request.user, "es_admin", None))
         print("FILES:", request.FILES)
         print("POST:", request.data)
         return super().create(request, *args, **kwargs)

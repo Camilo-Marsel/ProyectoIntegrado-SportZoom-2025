@@ -25,10 +25,37 @@
 
         <!-- Filtro -->
         <aside class="w-full lg:w-64 bg-white border rounded-xl p-4 shadow-sm">
-            <h2 class="font-semibold text-lg mb-3">Filtros</h2>
-            <input type="text" placeholder="Buscar producto..." [(ngModel)]="filtroNombre"
+        <h2 class="font-semibold text-lg mb-3">Filtros</h2>
+
+        <!-- Búsqueda por nombre -->
+        <input type="text" placeholder="Buscar producto..." [(ngModel)]="filtroNombre"
+            class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+
+        <!-- Filtro por marca -->
+        <input type="text" placeholder="Marca..." [(ngModel)]="filtroMarca"
+            class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+
+        <!-- Filtro por talla -->
+        <input type="text" placeholder="Talla..." [(ngModel)]="filtroTalla"
+            class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+
+        <!-- Rango de precios -->
+        <div class="flex gap-2 mb-3">
+            <input type="number" placeholder="Mín $" [(ngModel)]="precioMin"
                 class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+            <input type="number" placeholder="Máx $" [(ngModel)]="precioMax"
+                class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-300" />
+        </div>
+
+        <button (click)="aplicarFiltros()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+            Aplicar filtros
+        </button>
+
+        <button (click)="limpiarFiltros()" class="mt-2 w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition">
+            Limpiar filtros
+        </button>
         </aside>
+
 
         <!-- productos -->
         <main class="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-min">
@@ -78,6 +105,8 @@
                         {{ productoSeleccionado.precio | currency:'COP ':'symbol':'1.0-0' }}
                     </p>
                     <p class="text-sm text-gray-600">Stock disponible: {{ productoSeleccionado.stock }}</p>
+                    <p><strong>Marca:</strong> {{ productoSeleccionado.marca }}</p>
+                    <p><strong>Talla:</strong> {{ productoSeleccionado.talla }}</p>
 
                     <div class="text-sm text-gray-700 leading-relaxed border-t pt-2">
                         <strong>Descripción:</strong><br>
@@ -113,6 +142,12 @@
                         class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
 
                     <input type="number" placeholder="Stock" [(ngModel)]="productoForm.stock" name="stock"
+                        class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+
+                    <input type="text" placeholder="Marca" [(ngModel)]="productoForm.marca" name="marca"
+                        class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+
+                    <input type="text" placeholder="Talla" [(ngModel)]="productoForm.talla" name="talla"
                         class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
 
                     <input type="file" (change) ="onFileSelected($event)" accept="imagen/*"
