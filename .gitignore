@@ -1,5 +1,117 @@
+# =======================================
+# 🌐 BACKEND (DJANGO)
+# =======================================
+
+# Entorno virtual
+.venv/
 venv/
-__pycache__/
-*.pyc
+env/
+ENV/
+
+# Archivos de configuración local
+*.env
+*.env.*
+.envrc
+
+# Archivos de base de datos local
 db.sqlite3
-.env
+db.sqlite3-journal
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs y archivos temporales
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.mo
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Archivos de migraciones innecesarios (si los regeneras frecuentemente)
+# migrations/
+# Pero deja migrations/ si quieres conservarlas
+
+# Archivos de cache y sesiones
+*.pid
+*.seed
+*.cover
+.coverage
+coverage/
+htmlcov/
+.cache/
+pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+*.spec
+
+# Archivos generados por Django
+staticfiles/
+media/
+tmp/
+.DS_Store
+
+# =======================================
+# ⚙️ FRONTEND (ANGULAR)
+# =======================================
+
+# Dependencias de Node
+frontend/node_modules/
+frontend/.angular/
+frontend/.angular/cache/
+frontend/dist/
+frontend/tmp/
+frontend/out-tsc/
+
+# Archivos de entorno de Angular
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.prod.ts
+
+# Archivos de lock y logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =======================================
+# 🧰 EDITORES Y SISTEMA
+# =======================================
+
+# Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# =======================================
+# 🪄 OTRAS CARPETAS DE DESARROLLO
+# =======================================
+
+# Archivos de build de Docker (si aplican)
+docker-compose.override.yml
+__docker_build__/
+
+# Archivos de cobertura y testing
+coverage/
+tests/__pycache__/
+
+# =======================================
+# ✅ FIN
+# =======================================
