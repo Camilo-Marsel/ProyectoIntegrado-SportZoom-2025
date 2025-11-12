@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'tienda.apps.TiendaConfig',
     'rest_framework_simplejwt',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -140,10 +141,13 @@ AUTH_USER_MODEL = 'tienda.Usuario'
 # Configuración de DRF + JWT
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
 }
 
 # Configuración de JWT
