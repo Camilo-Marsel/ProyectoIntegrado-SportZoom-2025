@@ -1,0 +1,369 @@
+<div class="flex flex-col min-h-screen bg-gray-50 text-gray-800">
+  <header class="flex justify-between items-center p-4 bg-white shadow-sm border-b">
+    <div class="text-2xl font-bold text-blue-600">SportZoom</div>
+    <nav class="flex gap-4 items-center">
+      <a routerLink="/carrito" class="hover:text-blue-600 transition">Carrito</a>
+      <button class="hover:text-blue-600 transition">Pedidos</button>
+      <button class="hover:text-blue-600 transition">Vender</button>
+
+      <ng-container *ngIf="usuario; else loginBtn">
+        <span class="font-semibold">{{ usuario.username }}</span>
+        <button (click)="logout()" class="rounded-full border p-1 hover:bg-gray-100 transition">Cerrar sesión</button>
+      </ng-container>
+
+      <ng-template #loginBtn>
+        <a routerLink="/login" class="rounded-full border p-1 hover:bg-gray-100 transition">Iniciar sesión</a>
+      </ng-template>
+    </nav>
+  </header>
+
+  <div class="flex flex-1 flex-col lg:flex-row gap-6 p-6">
+    <!-- 🔍 PANEL DE FILTROS MEJORADO -->
+    <aside class="w-full lg:w-72 bg-white border rounded-xl p-5 shadow-sm space-y-4">
+      <h2 class="font-bold text-xl mb-4 text-gray-800 border-b pb-2">🔍 Filtros</h2>
+      
+      <!-- Buscar por nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Buscar producto</label>
+        <input
+          type="text"
+          placeholder="Ej: Nike Air Jordan..."
+          [(ngModel)]="filtroNombre"
+          class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+        />
+      </div>
+
+      <!-- Filtrar por marca -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Marca</label>
+        <select
+          [(ngModel)]="filtroMarca"
+          class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+        >
+          <option value="">Todas las marcas</option>
+          <option *ngFor="let marca of marcasDisponibles" [value]="marca">{{ marca }}</option>
+        </select>
+      </div>
+
+      <!-- Filtrar por talla -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Talla</label>
+        <select
+          [(ngModel)]="filtroTalla"
+          class="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+        >
+          <option value="">Todas las tallas</option>
+          <option *ngFor="let talla of tallasDisponibles" [value]="talla">{{ talla }}</option>
+        </select>
+      </div>
+
+      <!-- Rango de precio -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Rango de Precio (COP)</label>
+        <div class="flex gap-2">
+          <input
+            type="number"
+            placeholder="Mín"
+            [(ngModel)]="filtroPrecioMin"
+            class="w-1/2 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+          />
+          <input
+            type="number"
+            placeholder="Máx"
+            [(ngModel)]="filtroPrecioMax"
+            class="w-1/2 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+          />
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex flex-col gap-2 pt-3 border-t">
+        <button
+          type="button"
+          (click)="aplicarFiltros()"
+          class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+        >
+          ✓ Aplicar Filtros
+        </button>
+        <button
+          type="button"
+          (click)="limpiarFiltros()"
+          class="w-full bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+        >
+          ✗ Limpiar Filtros
+        </button>
+      </div>
+
+      <!-- Mostrar filtros activos -->
+      <div *ngIf="filtroNombre?.trim() || filtroMarca?.trim() || filtroTalla?.trim() || filtroPrecioMin || filtroPrecioMax" 
+           class="text-xs text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+        <p class="font-semibold mb-1">Filtros seleccionados:</p>
+        <ul class="space-y-1">
+          <li *ngIf="filtroNombre?.trim()">• Búsqueda: "{{ filtroNombre }}"</li>
+          <li *ngIf="filtroMarca?.trim()">• Marca: {{ filtroMarca }}</li>
+          <li *ngIf="filtroTalla?.trim()">• Talla: {{ filtroTalla }}</li>
+          <li *ngIf="filtroPrecioMin">• Precio mín: {{ filtroPrecioMin | currency:'COP ':'symbol':'1.0-0' }}</li>
+          <li *ngIf="filtroPrecioMax">• Precio máx: {{ filtroPrecioMax | currency:'COP ':'symbol':'1.0-0' }}</li>
+        </ul>
+        <p class="text-xs text-gray-500 mt-2 italic">Haz clic en "Aplicar Filtros" para buscar</p>
+      </div>
+    </aside>
+
+    <!-- 🛍️ GRID DE PRODUCTOS -->
+    <main class="flex-1 flex flex-col">
+      <!-- Info de resultados -->
+      <div class="mb-4 text-sm text-gray-600 bg-white rounded-lg p-3 border">
+        <span *ngIf="!cargando">
+          Mostrando {{ (paginaActual - 1) * productosPorPagina + 1 }} - 
+          {{ Math.min(paginaActual * productosPorPagina, totalProductos) }} 
+          de {{ totalProductos }} productos
+        </span>
+      </div>
+
+      <!-- Grid de productos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-min flex-1">
+        <p *ngIf="cargando" class="col-span-full text-center text-gray-500">Cargando productos...</p>
+
+        <div
+          *ngFor="let p of productos"
+          (click)="verDetalle(p)"
+          [class.border-blue-500]="productoSeleccionado === p"
+          class="border bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 flex flex-col cursor-pointer"
+        >
+          <img [src]="p.imagen" [alt]="p.nombre" class="w-full h-36 object-cover rounded-lg mb-3" />
+          <div class="flex-1 space-y-1">
+            <h3 class="font-semibold text-lg truncate">{{ p.nombre }}</h3>
+            <p class="text-green-600 font-bold">
+              {{ p.precio | currency:'COP ':'symbol':'1.0-0' }}
+            </p>
+            <p class="text-gray-600 text-sm">🏷️ {{ p.marca }} • Talla {{ p.talla }}</p>
+            <p class="text-gray-600 text-sm">📦 Stock: {{ p.stock ?? 0 }}</p>
+          </div>
+
+          <button
+            (click)="agregarAlCarrito(p); $event.stopPropagation()"
+            [disabled]="(p.stock ?? 0) === 0"
+            class="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ (p.stock ?? 0) > 0 ? '🛒 Añadir al carrito' : 'Agotado' }}
+          </button>
+        </div>
+
+        <p
+          *ngIf="!cargando && productos.length === 0"
+          class="col-span-full text-center text-gray-500 py-10"
+        >
+          No se encontraron productos con los filtros seleccionados. 😕
+        </p>
+      </div>
+
+      <!-- 📄 PAGINACIÓN -->
+<div *ngIf="totalPaginas > 1" class="mt-6 flex flex-col items-center gap-3 bg-white p-4 rounded-lg border">
+  
+  <!-- Texto de índice -->
+  <p class="text-gray-700 text-sm font-medium">
+    Mostrando {{ indiceInicio + 1 }} - {{ indiceFin }} de {{ totalProductos }} productos
+  </p>
+
+  <!-- Controles de paginación -->
+  <div class="flex justify-center items-center gap-2">
+    <!-- Botón anterior -->
+    <button
+      (click)="paginaAnteriorNav()"
+      [disabled]="!paginaAnterior"
+      class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      ← Anterior
+    </button>
+
+    <!-- Primera página -->
+    <button
+      *ngIf="paginaActual > 3"
+      (click)="irAPagina(1)"
+      class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+    >
+      1
+    </button>
+    <span *ngIf="paginaActual > 3" class="px-2">...</span>
+
+    <!-- Páginas cercanas -->
+    <button
+      *ngFor="let pagina of obtenerPaginas()"
+      (click)="irAPagina(pagina)"
+      [class.bg-blue-600]="pagina === paginaActual"
+      [class.text-white]="pagina === paginaActual"
+      [class.bg-gray-100]="pagina !== paginaActual"
+      class="px-3 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition font-medium"
+    >
+      {{ pagina }}
+    </button>
+
+    <!-- Última página -->
+    <span *ngIf="paginaActual < totalPaginas - 2" class="px-2">...</span>
+    <button
+      *ngIf="paginaActual < totalPaginas - 2"
+      (click)="irAPagina(totalPaginas)"
+      class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+    >
+      {{ totalPaginas }}
+    </button>
+
+    <!-- Botón siguiente -->
+    <button
+      (click)="paginaSiguiente()"
+      [disabled]="!siguientePagina"
+      class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Siguiente →
+    </button>
+  </div>
+</div>
+
+      
+    </main>
+
+    <!-- 📋 PANEL DERECHO -->
+    <aside class="w-full lg:w-96 flex flex-col gap-6">
+      <!-- Detalle del producto -->
+      <section class="border rounded-xl bg-white shadow-sm p-5">
+        <h2 class="font-bold text-xl mb-3 text-gray-800 border-b pb-2">📦 Detalle del producto</h2>
+        <div *ngIf="productoSeleccionado; else sinSeleccion" class="space-y-3">
+          <img
+            [src]="productoSeleccionado.imagen"
+            [alt]="productoSeleccionado.nombre"
+            class="w-full h-48 object-cover rounded-lg border"
+          />
+          <h3 class="font-bold text-lg text-gray-900">{{ productoSeleccionado.nombre }}</h3>
+          <p class="text-green-600 font-semibold text-lg">
+            {{ productoSeleccionado.precio | currency:'COP ':'symbol':'1.0-0' }}
+          </p>
+          <div class="flex gap-4 text-sm text-gray-700">
+            <p>🏷️ <strong>Marca:</strong> {{ productoSeleccionado.marca }}</p>
+            <p>👟 <strong>Talla:</strong> {{ productoSeleccionado.talla }}</p>
+          </div>
+          <p class="text-sm text-gray-600">
+            📦 Stock disponible: {{ productoSeleccionado.stock ?? 0 }}
+          </p>
+          <div class="text-sm text-gray-700 leading-relaxed border-t pt-2">
+            <strong>Descripción:</strong><br />
+            {{ productoSeleccionado.descripcion || 'Sin descripción disponible.' }}
+          </div>
+          <button
+            (click)="agregarAlCarrito(productoSeleccionado)"
+            [disabled]="(productoSeleccionado.stock ?? 0) === 0"
+            class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            🛒 Añadir al carrito
+          </button>
+        </div>
+
+        <ng-template #sinSeleccion>
+          <p class="text-gray-500 text-sm mt-10 text-center">
+            Selecciona un producto para ver los detalles
+          </p>
+        </ng-template>
+      </section>
+
+      <!-- 👨‍💼 PANEL DE ADMINISTRACIÓN -->
+      <section *ngIf="usuario?.es_admin" class="border rounded-xl bg-white shadow-sm p-5">
+        <h2 class="font-bold text-xl mb-4 text-gray-800 border-b pb-2">👨‍💼 Panel de Administración</h2>
+        <form (ngSubmit)="guardarProducto()" class="space-y-3">
+          <input
+            type="text"
+            placeholder="Nombre"
+            [(ngModel)]="productoForm.nombre"
+            name="nombre"
+            required
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+          <textarea
+            placeholder="Descripción"
+            [(ngModel)]="productoForm.descripcion"
+            name="descripcion"
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          ></textarea>
+          
+          <!-- Marca -->
+          <select
+            [(ngModel)]="productoForm.marca"
+            name="marca"
+            required
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          >
+            <option *ngFor="let marca of marcasDisponibles" [value]="marca">{{ marca }}</option>
+          </select>
+          
+          <!-- Talla -->
+          <select
+            [(ngModel)]="productoForm.talla"
+            name="talla"
+            required
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          >
+            <option *ngFor="let talla of tallasDisponibles" [value]="talla">Talla {{ talla }}</option>
+          </select>
+          
+          <input
+            type="number"
+            placeholder="Precio (en COP)"
+            [(ngModel)]="productoForm.precio"
+            name="precio"
+            required
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+          <input
+            type="number"
+            placeholder="Stock disponible"
+            [(ngModel)]="productoForm.stock"
+            name="stock"
+            required
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            class="w-full border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            type="submit"
+            class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            {{ productoForm.id ? '✏️ Actualizar Producto' : '➕ Agregar Producto' }}
+          </button>
+        </form>
+
+        <div class="mt-6">
+          <h3 class="font-semibold text-gray-700 mb-2">Productos existentes</h3>
+          <div
+            *ngFor="let p of productos"
+            class="border rounded-lg p-3 flex justify-between items-center hover:bg-gray-50 transition"
+          >
+            <div class="truncate flex-1">
+              <p class="font-medium">{{ p.nombre }}</p>
+              <p class="text-xs text-gray-500">{{ p.marca }} • Talla {{ p.talla }}</p>
+            </div>
+            <div class="flex gap-2">
+              <button
+                (click)="editarProducto(p)"
+                class="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500 transition text-sm"
+              >
+                Editar
+              </button>
+              <button
+                (click)="p.id && eliminarProducto(p.id)"
+                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="text-center p-4 bg-white border-t mt-auto text-sm text-gray-600">
+    © 2025 SportZoom — Todos los derechos reservados
+  </footer>
+</div>

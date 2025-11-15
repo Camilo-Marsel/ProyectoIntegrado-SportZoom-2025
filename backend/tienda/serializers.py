@@ -9,7 +9,7 @@ class ProductoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Producto
-        fields = ['id', 'nombre', 'descripcion', 'precio', 'stock', 'imagen', 'imagen_url', 'disponibilidad']
+        fields = ['id', 'nombre', 'descripcion', 'precio', 'stock', 'marca', 'talla', 'imagen', 'imagen_url', 'disponibilidad']  # Agregados marca y talla
         extra_kwargs = {
             'imagen': {'required': False, 'allow_null': True },
         }
