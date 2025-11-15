@@ -106,76 +106,55 @@ export class TiendaComponent implements OnInit {
   }
   
   // 🔥 Cargar productos con filtros aplicados
-cargarProductos() {
-  console.log('🔥 CARGAR PRODUCTOS LLAMADO');
-  this.cdr.detectChanges();
-  this.cargando = true;
+  cargarProductos() {
+    console.log('🔥 CARGAR PRODUCTOS LLAMADO');
+    this.cargando = true;
 
-  // ✅ Solo enviar filtros que tengan valores reales (no vacíos ni null)
-  let params: any = {};
+    let params: any = {};
 
-  const nombreTrim = this.filtroNombre?.trim();
-  const marcaTrim = this.filtroMarca?.trim();
-  const tallaTrim = this.filtroTalla?.trim();
+    const nombreTrim = this.filtroNombre?.trim();
+    const marcaTrim = this.filtroMarca?.trim();
+    const tallaTrim = this.filtroTalla?.trim();
 
-  console.log('Valores trimmed:', { nombreTrim, marcaTrim, tallaTrim });
+    if (nombreTrim) params.search = nombreTrim;
+    if (marcaTrim) params.marca = marcaTrim;
+    if (tallaTrim) params.talla = tallaTrim;
+    if (this.filtroPrecioMin != null) params.precio_min = this.filtroPrecioMin;
+    if (this.filtroPrecioMax != null) params.precio_max = this.filtroPrecioMax;
 
-  if (nombreTrim) params.search = nombreTrim;
-  if (marcaTrim) params.marca = marcaTrim;
-  if (tallaTrim) params.talla = tallaTrim;
-  if (this.filtroPrecioMin != null) params.precio_min = this.filtroPrecioMin;
-  if (this.filtroPrecioMax != null) params.precio_max = this.filtroPrecioMax;
+    params.page = this.paginaActual || 1;
+    params.page_size = this.productosPorPagina;
 
-  // 🔹 Mantener página actual o usar 1 si no hay valor
-  params.page = this.paginaActual || 1;
-  params.page_size = this.productosPorPagina;
+    console.log('📤 Params enviados al backend:', params);
 
-  console.log('📤 Params enviados al backend:', params);
+    this.http.get<any>(`${this.apiUrl}/productos/`, { params }).subscribe({
+      next: (res) => {
+        console.log('✅ Respuesta del backend:', res);
+        this.productos = res.results || res;
+        this.totalProductos = res.count || this.productos.length;
+        this.totalPaginas = Math.ceil(this.totalProductos / this.productosPorPagina);
+        this.siguientePagina = res.next;
+        this.paginaAnterior = res.previous;
 
-  this.http.get<any>(`${this.apiUrl}/productos/`, { params }).subscribe({
-    next: (res) => {
-      console.log('✅ Respuesta del backend:', res);
-      this.productos = res.results || res;
-      this.totalProductos = res.count || this.productos.length;
-      this.totalPaginas = Math.ceil(this.totalProductos / this.productosPorPagina);
-      this.siguientePagina = res.next;
-      this.paginaAnterior = res.previous;
+        this.indiceInicio = (this.paginaActual - 1) * this.productosPorPagina;
+        this.indiceFin = Math.min(this.paginaActual * this.productosPorPagina, this.totalProductos);
 
-      // 🧮 Calcular índices para mostrar el rango
-      this.indiceInicio = (this.paginaActual - 1) * this.productosPorPagina + 1;
-      this.indiceFin = Math.min(this.indiceInicio + this.productos.length - 1, this.totalProductos);
-
-      this.cargando = false;
-      this.cdr.detectChanges();
-    },
-    error: (err) => {
-      console.error('❌ Error al cargar productos', err);
-      this.cargando = false;
-      this.cdr.detectChanges();
-    }
-  });
-}
-
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('❌ Error al cargar productos', err);
+        this.cargando = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   // 🎯 Aplicar filtros (al hacer clic en el botón)
- aplicarFiltros() {
-  console.log('🔍 APLICAR FILTROS LLAMADO');
-
-    // Espera una microtarea para dejar que Angular actualice los ngModel antes de filtrar
-  queueMicrotask(() => {
-      console.log('Valores actuales (tras sync de ngModel):', {
-        nombre: this.filtroNombre,
-        marca: this.filtroMarca,
-        talla: this.filtroTalla,
-        precioMin: this.filtroPrecioMin,
-        precioMax: this.filtroPrecioMax
-  });
-
-  this.paginaActual = 1;
-    setTimeout(() => {
-      this.cargarProductos();
-      });
-    });
+  aplicarFiltros() {
+    console.log('🔍 APLICAR FILTROS LLAMADO');
+    this.paginaActual = 1;
+    this.cargarProductos();
   }
 
   // 🧹 Limpiar todos los filtros
@@ -186,9 +165,7 @@ cargarProductos() {
     this.filtroPrecioMin = null;
     this.filtroPrecioMax = null;
     this.paginaActual = 1;
-    this.cdr.detectChanges();
     this.cargarProductos();
-    this.cdr.detectChanges();
   }
 
   // 📄 Navegación de paginación
@@ -212,7 +189,6 @@ cargarProductos() {
     }
   }
 
-  // Generar array de números de página para mostrar
   obtenerPaginas(): number[] {
     const paginas: number[] = [];
     const rango = 2;
@@ -226,20 +202,30 @@ cargarProductos() {
     return paginas;
   }
 
+  // 👁️ Ver detalle del producto (TOGGLE CORREGIDO)
   verDetalle(producto: Producto) {
-    if (this.productoSeleccionado === producto) {
+    console.log('🔍 Ver detalle clickeado:', producto.nombre);
+    
+    // Toggle: si ya está seleccionado, deseleccionar
+    if (this.productoSeleccionado?.id === producto.id) {
       this.productoSeleccionado = null;
-      this.limpiarFormulario();
+      console.log('✅ Producto deseleccionado');
     } else {
       this.productoSeleccionado = producto;
-      if (this.usuario?.es_admin) {
-        this.productoForm = { ...producto };
-      }
+      console.log('✅ Producto seleccionado:', producto.nombre);
     }
+    
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
   }
 
   // 🛒 Añadir producto al carrito
-  agregarAlCarrito(producto: Producto) {
+  agregarAlCarrito(producto: Producto, event?: Event) {
+    // Detener propagación del evento para que no active verDetalle()
+    if (event) {
+      event.stopPropagation();
+    }
+    
     if (!producto.id) return;
 
     this.carritoService.agregarProducto({
@@ -258,17 +244,15 @@ cargarProductos() {
   }
 
   guardarProducto() {
-    // Verificar autenticación
     const token = this.authService.obtenerToken();
     if (!token) {
       alert('⚠️ Debes iniciar sesión como administrador para crear productos');
       return;
     }
 
-    // Crear headers sin Content-Type (FormData lo maneja automáticamente)
     const headers = this.authService.obtenerCabeceraAuth();
-
     const formData = new FormData();
+    
     formData.append('nombre', this.productoForm.nombre ?? '');
     formData.append('descripcion', this.productoForm.descripcion ?? '');
     formData.append('precio', String(this.productoForm.precio ?? 0));
@@ -280,15 +264,13 @@ cargarProductos() {
       formData.append('imagen', this.selectedFile);
     }
 
-    console.log('🔐 Token:', token);
-    console.log('📦 FormData:', Object.fromEntries(formData.entries()));
-
     if (this.productoForm.id) {
       // 🔄 Actualizar producto existente
       this.http.put(`${this.apiUrl}/productos/${this.productoForm.id}/`, formData, { headers }).subscribe({
         next: () => {
           alert('✅ Producto actualizado correctamente');
           this.limpiarFormulario();
+          this.productoSeleccionado = null;
           this.cargarProductos();
         },
         error: (err) => {
@@ -312,9 +294,9 @@ cargarProductos() {
         error: (err) => {
           console.error('❌ Error al crear producto:', err);
           if (err.status === 403) {
-            alert('⚠️ No tienes permisos de administrador. Verifica que hayas iniciado sesión.');
+            alert('⚠️ No tienes permisos de administrador');
           } else if (err.status === 401) {
-            alert('⚠️ Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
+            alert('⚠️ Tu sesión ha expirado');
           } else {
             alert('❌ Error al crear producto: ' + (err.error?.detail || 'Error desconocido'));
           }
@@ -323,12 +305,39 @@ cargarProductos() {
     }
   }
 
-  editarProducto(producto: Producto) {
+  // ✏️ Editar producto (CORREGIDO CON SCROLL)
+  editarProducto(producto: Producto, event?: Event) {
+    // Detener propagación para que no active otros eventos
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    console.log('✏️ Editando producto:', producto.nombre);
+    
+    // Copiar datos al formulario
     this.productoForm = { ...producto };
     this.productoSeleccionado = producto;
+    
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+    
+    // Hacer scroll al formulario de administración
+    setTimeout(() => {
+      const adminPanel = document.querySelector('section:has(form)');
+      if (adminPanel) {
+        adminPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        console.log('✅ Scroll realizado al formulario');
+      }
+    }, 100);
   }
 
-  eliminarProducto(id: number) {
+  // 🗑️ Eliminar producto (CORREGIDO)
+  eliminarProducto(id: number, event?: Event) {
+    // Detener propagación
+    if (event) {
+      event.stopPropagation();
+    }
+    
     if (!confirm('¿Seguro que quieres eliminar este producto?')) return;
 
     const headers = this.authService.obtenerCabeceraAuth();
@@ -336,12 +345,15 @@ cargarProductos() {
     this.http.delete(`${this.apiUrl}/productos/${id}/`, { headers }).subscribe({
       next: () => {
         this.productos = this.productos.filter((p) => p.id !== id);
-        this.productoSeleccionado = null;
+        if (this.productoSeleccionado?.id === id) {
+          this.productoSeleccionado = null;
+        }
         this.limpiarFormulario();
-        alert('Producto eliminado correctamente');
+        alert('✅ Producto eliminado correctamente');
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al eliminar producto', err);
+        console.error('❌ Error al eliminar producto', err);
         alert('No se pudo eliminar el producto');
       }
     });
@@ -358,5 +370,7 @@ cargarProductos() {
       descripcion: ''
     };
     this.selectedFile = null;
+    this.productoSeleccionado = null;
+    this.cdr.detectChanges();
   }
 }

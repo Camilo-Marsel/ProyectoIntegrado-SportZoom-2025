@@ -141,7 +141,7 @@
           </div>
 
           <button
-            (click)="agregarAlCarrito(p); $event.stopPropagation()"
+            (click)="agregarAlCarrito(p, $event)"
             [disabled]="(p.stock ?? 0) === 0"
             class="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -249,7 +249,7 @@
             {{ productoSeleccionado.descripcion || 'Sin descripción disponible.' }}
           </div>
           <button
-            (click)="agregarAlCarrito(productoSeleccionado)"
+            (click)="agregarAlCarrito(productoSeleccionado, $event)"
             [disabled]="(productoSeleccionado.stock ?? 0) === 0"
             class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
@@ -345,13 +345,13 @@
             </div>
             <div class="flex gap-2">
               <button
-                (click)="editarProducto(p)"
+                (click)="editarProducto(p, $event)"
                 class="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500 transition text-sm"
               >
                 Editar
               </button>
               <button
-                (click)="p.id && eliminarProducto(p.id)"
+                (click)="p.id && eliminarProducto(p.id!, $event)"
                 class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm"
               >
                 Eliminar
