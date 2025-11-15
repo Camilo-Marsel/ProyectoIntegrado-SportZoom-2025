@@ -1,16 +1,15 @@
 <div class="min-h-screen flex flex-col bg-gray-50 text-gray-800">
-  <!-- Header -->
   <header class="flex justify-between items-center p-4 bg-white shadow-sm border-b border-gray-200">
-    <div class="text-2xl font-bold text-blue-600">🛒 Carrito de Compras</div>
+    <div class="text-2xl font-bold text-blue-600">Carrito de Compras</div>
     <a routerLink="/tienda" class="text-blue-600 font-semibold hover:text-blue-700 transition">
       ← Seguir comprando
     </a>
   </header>
 
-  <!-- Contenido principal -->
+  <!-- Contenido -->
   <main class="flex-1 container mx-auto p-6">
     <div *ngIf="productos.length === 0" class="text-center text-gray-500 mt-20">
-      <p class="text-lg">Tu carrito está vacío 😔</p>
+      <p class="text-lg">Tu carrito está vacío </p>
     </div>
 
     <div *ngIf="productos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -27,7 +26,7 @@
           />
         </div>
 
-        <!-- Información -->
+        <!-- Información en carrito -->
         <div class="p-4 flex flex-col flex-grow">
           <h3 class="font-semibold text-lg text-gray-800 mb-1">{{ p.nombre }}</h3>
           <p class="text-gray-500 text-sm mb-2">Código: {{ p.id }}</p>
@@ -46,7 +45,7 @@
     </div>
   </main>
 
-  <!-- Footer -->
+
   <footer
     *ngIf="productos.length > 0"
     class="bg-white border-t border-gray-200 shadow-inner p-5 flex flex-col sm:flex-row justify-between items-center gap-4"

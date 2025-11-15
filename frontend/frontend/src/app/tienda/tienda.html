@@ -48,7 +48,6 @@
           <p class="text-gray-600 text-sm">Stock: {{ p.stock ?? 0 }}</p>
         </div>
 
-        <!-- 🔧 FIX: evitar error 'Object is possibly null' -->
         <button
           (click)="agregarAlCarrito(p); $event.stopPropagation()"
           [disabled]="(p.stock ?? 0) === 0"
