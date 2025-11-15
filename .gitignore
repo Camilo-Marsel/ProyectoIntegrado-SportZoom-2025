@@ -112,6 +112,9 @@ __docker_build__/
 coverage/
 tests/__pycache__/
 
+node_modules/
+.angular/
+
 # =======================================
 # ✅ FIN
 # =======================================
