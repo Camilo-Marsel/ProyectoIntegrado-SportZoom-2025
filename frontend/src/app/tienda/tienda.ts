@@ -40,14 +40,14 @@ export class TiendaComponent implements OnInit {
   productos: Producto[] = [];
   productoSeleccionado: Producto | null = null;
   
-  // 🔍 Filtros
+  // Filtros
   filtroNombre: string = '';
   filtroMarca: string = '';
   filtroTalla: string = '';
   filtroPrecioMin: number | null = null;
   filtroPrecioMax: number | null = null;
   
-  // 📄 Paginación
+  // Paginación
   paginaActual: number = 1;
   productosPorPagina: number = 10;
   totalProductos: number = 0;
@@ -84,7 +84,6 @@ export class TiendaComponent implements OnInit {
 
   selectedFile: File | null = null;
   
-  // Exponer Math para el template
   Math = Math;
 
   constructor(
@@ -105,12 +104,12 @@ export class TiendaComponent implements OnInit {
     alert('Has cerrado sesión');
   }
   
-  // 🔥 Cargar productos con filtros aplicados
+  // Cargar productos con los filtros aplicados
   cargarProductos() {
-    console.log('🔥 CARGAR PRODUCTOS LLAMADO');
+    console.log(' CARGAR PRODUCTOS LLAMADO');
     this.cargando = true;
 
-    let params: any = {};
+    let params: any = {}; 
 
     const nombreTrim = this.filtroNombre?.trim();
     const marcaTrim = this.filtroMarca?.trim();
@@ -125,11 +124,11 @@ export class TiendaComponent implements OnInit {
     params.page = this.paginaActual || 1;
     params.page_size = this.productosPorPagina;
 
-    console.log('📤 Params enviados al backend:', params);
+    console.log(' Params enviados al backend:', params);
 
     this.http.get<any>(`${this.apiUrl}/productos/`, { params }).subscribe({
       next: (res) => {
-        console.log('✅ Respuesta del backend:', res);
+        console.log(' Respuesta del backend:', res);
         this.productos = res.results || res;
         this.totalProductos = res.count || this.productos.length;
         this.totalPaginas = Math.ceil(this.totalProductos / this.productosPorPagina);
@@ -143,21 +142,21 @@ export class TiendaComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Error al cargar productos', err);
+        console.error('Error al cargar productos', err);
         this.cargando = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  // 🎯 Aplicar filtros (al hacer clic en el botón)
+  // Aplicar filtros
   aplicarFiltros() {
     console.log('🔍 APLICAR FILTROS LLAMADO');
     this.paginaActual = 1;
     this.cargarProductos();
   }
 
-  // 🧹 Limpiar todos los filtros
+  // Limpiar todos los filtros
   limpiarFiltros() {
     this.filtroNombre = '';
     this.filtroMarca = '';
@@ -168,7 +167,7 @@ export class TiendaComponent implements OnInit {
     this.cargarProductos();
   }
 
-  // 📄 Navegación de paginación
+  // Navegación de paginación
   irAPagina(pagina: number) {
     if (pagina >= 1 && pagina <= this.totalPaginas) {
       this.paginaActual = pagina;
@@ -202,26 +201,23 @@ export class TiendaComponent implements OnInit {
     return paginas;
   }
 
-  // 👁️ Ver detalle del producto (TOGGLE CORREGIDO)
+  // Ver detalle del producto
   verDetalle(producto: Producto) {
-    console.log('🔍 Ver detalle clickeado:', producto.nombre);
+    console.log('Ver detalle clickeado:', producto.nombre);
     
-    // Toggle: si ya está seleccionado, deseleccionar
     if (this.productoSeleccionado?.id === producto.id) {
       this.productoSeleccionado = null;
-      console.log('✅ Producto deseleccionado');
+      console.log('Producto deseleccionado');
     } else {
       this.productoSeleccionado = producto;
-      console.log('✅ Producto seleccionado:', producto.nombre);
+      console.log('Producto seleccionado:', producto.nombre);
     }
     
-    // Forzar detección de cambios
     this.cdr.detectChanges();
   }
 
-  // 🛒 Añadir producto al carrito
+  // Añadir producto al carrito
   agregarAlCarrito(producto: Producto, event?: Event) {
-    // Detener propagación del evento para que no active verDetalle()
     if (event) {
       event.stopPropagation();
     }
@@ -246,7 +242,7 @@ export class TiendaComponent implements OnInit {
   guardarProducto() {
     const token = this.authService.obtenerToken();
     if (!token) {
-      alert('⚠️ Debes iniciar sesión como administrador para crear productos');
+      alert('Debes iniciar sesión como administrador para crear productos');
       return;
     }
 
@@ -265,54 +261,54 @@ export class TiendaComponent implements OnInit {
     }
 
     if (this.productoForm.id) {
-      // 🔄 Actualizar producto existente
+      // Actualizar producto existente
       this.http.put(`${this.apiUrl}/productos/${this.productoForm.id}/`, formData, { headers }).subscribe({
         next: () => {
-          alert('✅ Producto actualizado correctamente');
+          alert('Producto actualizado correctamente');
           this.limpiarFormulario();
           this.productoSeleccionado = null;
           this.cargarProductos();
         },
         error: (err) => {
-          console.error('❌ Error al actualizar producto:', err);
+          console.error('Error al actualizar producto:', err);
           if (err.status === 403) {
-            alert('⚠️ No tienes permisos de administrador');
+            alert('No tienes permisos de administrador');
           } else {
-            alert('❌ Error al actualizar producto');
+            alert('Error al actualizar producto');
           }
         }
       });
     } else {
-      // ➕ Crear producto nuevo
+      // Crear producto nuevo
       this.http.post(`${this.apiUrl}/productos/`, formData, { headers }).subscribe({
         next: (res: any) => {
           this.productos.push(res);
           this.limpiarFormulario();
           this.cargarProductos();
-          alert('✅ Producto agregado correctamente');
+          alert('Producto agregado correctamente');
         },
         error: (err) => {
-          console.error('❌ Error al crear producto:', err);
+          console.error('Error al crear producto:', err);
           if (err.status === 403) {
-            alert('⚠️ No tienes permisos de administrador');
+            alert('No tienes permisos de administrador');
           } else if (err.status === 401) {
-            alert('⚠️ Tu sesión ha expirado');
+            alert('Tu sesión ha expirado');
           } else {
-            alert('❌ Error al crear producto: ' + (err.error?.detail || 'Error desconocido'));
+            alert('Error al crear producto: ' + (err.error?.detail || 'Error desconocido'));
           }
         }
       });
     }
   }
 
-  // ✏️ Editar producto (CORREGIDO CON SCROLL)
+  // Editar producto
   editarProducto(producto: Producto, event?: Event) {
     // Detener propagación para que no active otros eventos
     if (event) {
       event.stopPropagation();
     }
     
-    console.log('✏️ Editando producto:', producto.nombre);
+    console.log('Editando producto:', producto.nombre);
     
     // Copiar datos al formulario
     this.productoForm = { ...producto };
@@ -326,14 +322,13 @@ export class TiendaComponent implements OnInit {
       const adminPanel = document.querySelector('section:has(form)');
       if (adminPanel) {
         adminPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        console.log('✅ Scroll realizado al formulario');
+        console.log('Scroll realizado al formulario');
       }
     }, 100);
   }
 
-  // 🗑️ Eliminar producto (CORREGIDO)
+  // Eliminar producto
   eliminarProducto(id: number, event?: Event) {
-    // Detener propagación
     if (event) {
       event.stopPropagation();
     }
@@ -349,11 +344,11 @@ export class TiendaComponent implements OnInit {
           this.productoSeleccionado = null;
         }
         this.limpiarFormulario();
-        alert('✅ Producto eliminado correctamente');
+        alert('Producto eliminado correctamente');
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('❌ Error al eliminar producto', err);
+        console.error('Error al eliminar producto', err);
         alert('No se pudo eliminar el producto');
       }
     });

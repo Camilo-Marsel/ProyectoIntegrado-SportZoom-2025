@@ -7,6 +7,9 @@ from .views import ProductoUpdate
 from .views import ProductoDelete
 from rest_framework.routers import DefaultRouter
 from .views import ProductoViewSet
+from .views import crear_pedido
+from .views import iniciar_pago
+from .views import verificar_pago
 
 router = DefaultRouter()
 router.register(r'productos', ProductoViewSet, basename='producto')
@@ -18,4 +21,7 @@ urlpatterns = [
     path('admin/productos/crear/', ProductoCreate.as_view(), name='producto-create'),
     path('admin/productos/<int:pk>/actualizar/', ProductoUpdate.as_view(), name='producto-update'),
     path('admin/productos/<int:pk>/eliminar/', ProductoDelete.as_view(), name='producto-delete'),
+    path('checkout/crear-pedido/', crear_pedido, name='crear-pedido'),
+    path('checkout/pago/', iniciar_pago, name='iniciar-pago'),
+    path('checkout/verificar/<str:numero_pedido>/', verificar_pago, name='verificar-pago'),
 ]
