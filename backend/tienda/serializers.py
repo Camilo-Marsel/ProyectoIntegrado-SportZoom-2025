@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Producto
 from django.contrib.auth import authenticate
+from .models import Pedido
 
 class ProductoSerializer(serializers.ModelSerializer):
     imagen_url = serializers.SerializerMethodField(read_only=True)
@@ -37,3 +38,9 @@ class AdminLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('No tienes permisos de administrador')
         data['user'] = user
         return data
+  
+class PedidoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pedido
+        fields = '__all__'
+        read_only_fields = ['numero_pedido', 'fecha', 'estado', 'wompi_id']

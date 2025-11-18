@@ -4,10 +4,16 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend  # NUEVO
 from rest_framework import filters  # NUEVO
-from .models import Producto
-from .serializers import ProductoSerializer, AdminLoginSerializer
+from .models import Producto, Pedido
+from .serializers import ProductoSerializer, AdminLoginSerializer, PedidoSerializer
 from .permissions import IsAdminUserCustom
 from rest_framework.parsers import MultiPartParser, FormParser
+from .serializers import PedidoSerializer
+from rest_framework.decorators import api_view
+from django.conf import settings
+import requests
+import uuid
+
 
 
 class ProductoList(generics.ListAPIView):
@@ -113,3 +119,66 @@ class ProductoViewSet(viewsets.ModelViewSet):
         print("FILES:", request.FILES)
         print("POST:", request.data)
         return super().create(request, *args, **kwargs)
+    
+# Nuevo endpoint para crear pedidos
+# ======================================
+#  PEDIDOS
+# ======================================
+
+@api_view(['POST'])
+def crear_pedido(request):
+    serializer = PedidoSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+    pedido = serializer.save()
+    return Response({
+        "mensaje": "Pedido creado",
+        "numero_pedido": pedido.numero_pedido,
+        "total": pedido.total
+    })
+
+# ======================================
+#  PAGO SIMULADO
+# ======================================
+
+@api_view(['POST'])
+def iniciar_pago(request):
+    numero_pedido = request.data.get("numero_pedido")
+    nombre = request.data.get("nombre")
+    total = request.data.get("total")
+
+    if not numero_pedido or not total:
+        return Response({"error": "Datos incompletos"}, status=400)
+
+    try:
+        pedido = Pedido.objects.get(numero_pedido=numero_pedido)
+    except Pedido.DoesNotExist:
+        return Response({"error": "Pedido no encontrado"}, status=404)
+
+    # Simular pago aprobado automáticamente
+    pedido.estado = "pagado"
+    pedido.save()
+
+    # Devuelve también el carrito
+    return Response({
+        "mensaje": "Pago aprobado",
+        "numero_pedido": pedido.numero_pedido,
+        "nombre": pedido.nombre,
+        "total": pedido.total,
+        "carrito": pedido.carrito
+    })
+
+# ======================================
+#  VERIFICAR PAGO
+# ======================================
+
+@api_view(['GET'])
+def verificar_pago(request, numero_pedido):
+    try:
+        pedido = Pedido.objects.get(numero_pedido=numero_pedido)
+    except Pedido.DoesNotExist:
+        return Response({"error": "Pedido no existe"}, status=404)
+
+    return Response({
+        "estado": pedido.estado
+    })

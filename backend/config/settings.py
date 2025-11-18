@@ -164,3 +164,7 @@ SIMPLE_JWT = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
+
+WOMPI_PUBLIC_KEY = "pub_test_xxx"
+WOMPI_PRIVATE_KEY = "prv_test_xxx"
+WOMPI_URL = "https://sandbox.wompi.co/v1"
