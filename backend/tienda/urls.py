@@ -10,6 +10,7 @@ from .views import ProductoViewSet
 from .views import crear_pedido
 from .views import iniciar_pago
 from .views import verificar_pago
+from .views import consultar_pedido
 
 router = DefaultRouter()
 router.register(r'productos', ProductoViewSet, basename='producto')
@@ -24,4 +25,5 @@ urlpatterns = [
     path('checkout/crear-pedido/', crear_pedido, name='crear-pedido'),
     path('checkout/pago/', iniciar_pago, name='iniciar-pago'),
     path('checkout/verificar/<str:numero_pedido>/', verificar_pago, name='verificar-pago'),
+    path('pedidos/consultar/<str:numero_pedido>/', consultar_pedido, name='consultar-pedido'),
 ]

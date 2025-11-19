@@ -39,6 +39,7 @@ class ProductoList(generics.ListAPIView):
         return queryset
 
 
+
 # VISTAS ADMINISTRATIVAS
 
 class ProductoCreate(generics.CreateAPIView):
@@ -136,6 +137,19 @@ def crear_pedido(request):
         "numero_pedido": pedido.numero_pedido,
         "total": pedido.total
     })
+
+#Endpoint de consulta de pedido
+
+@api_view(['GET'])
+def consultar_pedido(request, numero_pedido):
+    try:
+        pedido = Pedido.objects.get(numero_pedido=numero_pedido)
+        serializer = PedidoSerializer(pedido)
+        return Response(serializer.data)
+    except Pedido.DoesNotExist:
+        return Response({
+            "error": "No se encontró ningún pedido con ese código"
+        }, status=404)
 
 # ======================================
 #  PAGO SIMULADO

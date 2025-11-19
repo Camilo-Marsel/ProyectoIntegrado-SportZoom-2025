@@ -9,13 +9,13 @@
         </svg>
         Carrito
       </a>
-      <button class="flex items-center gap-2 hover:text-blue-600 transition">
+      <a routerLink="/consulta-pedido" class="flex items-center gap-2 hover:text-blue-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         Pedidos
-      </button>
+      </a>
       <button class="flex items-center gap-2 hover:text-blue-600 transition">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -231,7 +231,7 @@
         </div>
 
         <p *ngIf="!cargando && productos.length === 0" class="col-span-full text-center text-gray-500 py-10">
-          No se encontraron productos con los filtros seleccionados. 
+          No se encontraron productos con los filtros seleccionados.
         </p>
       </div>
 
