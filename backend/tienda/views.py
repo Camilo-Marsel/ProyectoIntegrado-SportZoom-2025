@@ -145,15 +145,26 @@ def crear_pedido(request):
                 "error": f"Producto {item['id']} no encontrado"
             }, status=404)
     
-    # Si llegamos aquí, hay stock suficiente
-    serializer = PedidoSerializer(data=request.data)
+    # Calcular subtotal e IVA
+    subtotal = float(request.data.get('total', 0))
+    iva = subtotal * 0.19  # 19% IVA Colombia
+    total_con_iva = subtotal + iva
+    
+    # Crear pedido con total incluyendo IVA
+    data = request.data.copy()
+    data['total'] = total_con_iva
+    
+    serializer = PedidoSerializer(data=data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
     pedido = serializer.save()
+    
     return Response({
         "mensaje": "Pedido creado",
         "numero_pedido": pedido.numero_pedido,
-        "total": pedido.total
+        "subtotal": subtotal,
+        "iva": iva,
+        "total": total_con_iva
     })
 
 #Endpoint de consulta de pedido
@@ -168,6 +179,38 @@ def consultar_pedido(request, numero_pedido):
         return Response({
             "error": "No se encontró ningún pedido con ese código"
         }, status=404)
+
+@api_view(['GET'])
+def listar_pedidos(request):
+    """
+    Lista todos los pedidos ordenados por fecha (más recientes primero)
+    Solo accesible para administradores
+    """
+    pedidos = Pedido.objects.all().order_by('-fecha')
+    serializer = PedidoSerializer(pedidos, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['PATCH'])
+def actualizar_estado_pedido(request, numero_pedido):
+    """
+    Actualiza el estado de un pedido
+    Solo accesible para administradores
+    """
+    try:
+        pedido = Pedido.objects.get(numero_pedido=numero_pedido)
+    except Pedido.DoesNotExist:
+        return Response({"error": "Pedido no encontrado"}, status=404)
+    
+    nuevo_estado = request.data.get('estado')
+    if nuevo_estado not in ['pendiente', 'pagado', 'enviado', 'entregado', 'fallido']:
+        return Response({"error": "Estado inválido"}, status=400)
+    
+    pedido.estado = nuevo_estado
+    pedido.save()
+    
+    serializer = PedidoSerializer(pedido)
+    return Response(serializer.data)
 
 # ======================================
 #  PAGO SIMULADO

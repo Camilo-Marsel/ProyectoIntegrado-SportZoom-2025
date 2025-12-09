@@ -74,6 +74,10 @@ class Pedido(models.Model):
         ("pendiente", "Pendiente de pago"),
         ("pagado", "Pagado"),
         ("fallido", "Pago fallido"),
+        ("enviado", "Enviado"),        
+        ("entregado", "Entregado"),        
+        ("cancelado", "Cancelado"),
+
     )
 
     numero_pedido = models.CharField(max_length=20, unique=True, editable=False)

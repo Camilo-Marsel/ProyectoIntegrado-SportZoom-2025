@@ -18,6 +18,8 @@ export class CheckoutComponent implements OnInit {
     nombre: '',
     email: '',
     direccion: '',
+    subtotal: 0,
+    iva: 0,
     total: 0
   };
 
@@ -37,9 +39,13 @@ export class CheckoutComponent implements OnInit {
   ngOnInit() {
     // Calcular el total automáticamente del carrito
     const carrito = this.carritoService.obtenerCarrito();
-    this.datos.total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    this.datos.subtotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    this.datos.iva = this.datos.subtotal * 0.19;
+    this.datos.total = this.datos.subtotal + this.datos.iva;
     
-    console.log('Total calculado del carrito:', this.datos.total);
+    console.log('Subtotal:', this.datos.subtotal);
+    console.log('IVA (19%):', this.datos.iva);
+    console.log('Total:', this.datos.total);
   }
 
   pagar() {
