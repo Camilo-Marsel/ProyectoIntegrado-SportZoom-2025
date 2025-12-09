@@ -5,6 +5,7 @@ import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { RouterLink } from '@angular/router';
 import { CarritoService } from '../services/carrito.service';
+import { NotificationService } from '../services/notification.service'; // ← AGREGAR
 
 interface Producto {
   id?: number;
@@ -46,6 +47,8 @@ export class TiendaComponent implements OnInit {
   filtroTalla: string = '';
   filtroPrecioMin: number | null = null;
   filtroPrecioMax: number | null = null;
+
+  cantidadCarrito: number = 0;
   
   // Paginación
   paginaActual: number = 1;
@@ -90,23 +93,33 @@ export class TiendaComponent implements OnInit {
     private http: HttpClient,
     private authService: AuthService,
     private carritoService: CarritoService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private notificationService: NotificationService // ← AGREGAR
   ) {}
 
   ngOnInit(): void {
     this.usuario = this.authService.obtenerUsuarioActual();
     this.cargarProductos();
+
+    this.carritoService.carrito$.subscribe(productos => {
+      this.cantidadCarrito = productos.reduce((total, p) => total + p.cantidad, 0);
+      this.cdr.detectChanges();
+    });
+    
+    // Cargar cantidad inicial del carrito
+    const carritoActual = this.carritoService.obtenerCarrito();
+    this.cantidadCarrito = carritoActual.reduce((total, p) => total + p.cantidad, 0);
   }
 
   logout() {
     this.authService.logout();
     this.usuario = null;
-    alert('Has cerrado sesión');
+    this.notificationService.info('Has cerrado sesión'); // ← CAMBIAR
   }
   
   // Cargar productos con los filtros aplicados
   cargarProductos() {
-    console.log(' CARGAR PRODUCTOS LLAMADO');
+    console.log('⏳ CARGAR PRODUCTOS LLAMADO');
     this.cargando = true;
 
     let params: any = {}; 
@@ -124,11 +137,11 @@ export class TiendaComponent implements OnInit {
     params.page = this.paginaActual || 1;
     params.page_size = this.productosPorPagina;
 
-    console.log(' Params enviados al backend:', params);
+    console.log('📤 Params enviados al backend:', params);
 
     this.http.get<any>(`${this.apiUrl}/productos/`, { params }).subscribe({
       next: (res) => {
-        console.log(' Respuesta del backend:', res);
+        console.log('📥 Respuesta del backend:', res);
         this.productos = res.results || res;
         this.totalProductos = res.count || this.productos.length;
         this.totalPaginas = Math.ceil(this.totalProductos / this.productosPorPagina);
@@ -142,7 +155,8 @@ export class TiendaComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al cargar productos', err);
+        console.error('❌ Error al cargar productos', err);
+        this.notificationService.error('Error al cargar productos'); // ← AGREGAR
         this.cargando = false;
         this.cdr.detectChanges();
       }
@@ -165,6 +179,7 @@ export class TiendaComponent implements OnInit {
     this.filtroPrecioMax = null;
     this.paginaActual = 1;
     this.cargarProductos();
+    this.notificationService.info('Filtros limpiados'); // ← AGREGAR
   }
 
   // Navegación de paginación
@@ -203,7 +218,7 @@ export class TiendaComponent implements OnInit {
 
   // Ver detalle del producto
   verDetalle(producto: Producto) {
-    console.log('Ver detalle clickeado:', producto.nombre);
+    console.log('👁️ Ver detalle clickeado:', producto.nombre);
     
     if (this.productoSeleccionado?.id === producto.id) {
       this.productoSeleccionado = null;
@@ -232,7 +247,7 @@ export class TiendaComponent implements OnInit {
       cantidad: 1
     });
 
-    alert(`Añadido al carrito: ${producto.nombre}`);
+    this.notificationService.success(`✓ ${producto.nombre} añadido al carrito`); // ← CAMBIAR
   }
 
   onFileSelected(event: any) {
@@ -242,7 +257,7 @@ export class TiendaComponent implements OnInit {
   guardarProducto() {
     const token = this.authService.obtenerToken();
     if (!token) {
-      alert('Debes iniciar sesión como administrador para crear productos');
+      this.notificationService.error('Debes iniciar sesión como administrador'); // ← CAMBIAR
       return;
     }
 
@@ -264,7 +279,7 @@ export class TiendaComponent implements OnInit {
       // Actualizar producto existente
       this.http.put(`${this.apiUrl}/productos/${this.productoForm.id}/`, formData, { headers }).subscribe({
         next: () => {
-          alert('Producto actualizado correctamente');
+          this.notificationService.success('✓ Producto actualizado correctamente'); // ← CAMBIAR
           this.limpiarFormulario();
           this.productoSeleccionado = null;
           this.cargarProductos();
@@ -272,9 +287,9 @@ export class TiendaComponent implements OnInit {
         error: (err) => {
           console.error('Error al actualizar producto:', err);
           if (err.status === 403) {
-            alert('No tienes permisos de administrador');
+            this.notificationService.error('No tienes permisos de administrador'); // ← CAMBIAR
           } else {
-            alert('Error al actualizar producto');
+            this.notificationService.error('Error al actualizar producto'); // ← CAMBIAR
           }
         }
       });
@@ -285,16 +300,16 @@ export class TiendaComponent implements OnInit {
           this.productos.push(res);
           this.limpiarFormulario();
           this.cargarProductos();
-          alert('Producto agregado correctamente');
+          this.notificationService.success('✓ Producto agregado correctamente'); // ← CAMBIAR
         },
         error: (err) => {
           console.error('Error al crear producto:', err);
           if (err.status === 403) {
-            alert('No tienes permisos de administrador');
+            this.notificationService.error('No tienes permisos de administrador'); // ← CAMBIAR
           } else if (err.status === 401) {
-            alert('Tu sesión ha expirado');
+            this.notificationService.error('Tu sesión ha expirado'); // ← CAMBIAR
           } else {
-            alert('Error al crear producto: ' + (err.error?.detail || 'Error desconocido'));
+            this.notificationService.error('Error al crear producto'); // ← CAMBIAR
           }
         }
       });
@@ -303,21 +318,17 @@ export class TiendaComponent implements OnInit {
 
   // Editar producto
   editarProducto(producto: Producto, event?: Event) {
-    // Detener propagación para que no active otros eventos
     if (event) {
       event.stopPropagation();
     }
     
-    console.log('Editando producto:', producto.nombre);
+    console.log('✏️ Editando producto:', producto.nombre);
     
-    // Copiar datos al formulario
     this.productoForm = { ...producto };
     this.productoSeleccionado = producto;
     
-    // Forzar detección de cambios
     this.cdr.detectChanges();
     
-    // Hacer scroll al formulario de administración
     setTimeout(() => {
       const adminPanel = document.querySelector('section:has(form)');
       if (adminPanel) {
@@ -344,12 +355,12 @@ export class TiendaComponent implements OnInit {
           this.productoSeleccionado = null;
         }
         this.limpiarFormulario();
-        alert('Producto eliminado correctamente');
+        this.notificationService.success('✓ Producto eliminado correctamente'); // ← CAMBIAR
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al eliminar producto', err);
-        alert('No se pudo eliminar el producto');
+        this.notificationService.error('No se pudo eliminar el producto'); // ← CAMBIAR
       }
     });
   }

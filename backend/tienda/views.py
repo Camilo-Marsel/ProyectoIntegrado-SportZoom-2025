@@ -128,6 +128,24 @@ class ProductoViewSet(viewsets.ModelViewSet):
 
 @api_view(['POST'])
 def crear_pedido(request):
+    # Validar stock ANTES de crear el pedido
+    carrito = request.data.get('carrito', [])
+    
+    for item in carrito:
+        try:
+            producto = Producto.objects.get(id=item['id'])
+            cantidad_solicitada = item.get('cantidad', 1)
+            
+            if producto.stock < cantidad_solicitada:
+                return Response({
+                    "error": f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}, Solicitado: {cantidad_solicitada}"
+                }, status=400)
+        except Producto.DoesNotExist:
+            return Response({
+                "error": f"Producto {item['id']} no encontrado"
+            }, status=404)
+    
+    # Si llegamos aquí, hay stock suficiente
     serializer = PedidoSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=400)
@@ -157,9 +175,15 @@ def consultar_pedido(request, numero_pedido):
 
 @api_view(['POST'])
 def iniciar_pago(request):
+    print("📦 Datos recibidos:", request.data)
+    
     numero_pedido = request.data.get("numero_pedido")
     nombre = request.data.get("nombre")
+    email = request.data.get("email")
+    direccion = request.data.get("direccion")
     total = request.data.get("total")
+
+    print(f"✅ Nombre: {nombre}, Email: {email}, Dirección: {direccion}")
 
     if not numero_pedido or not total:
         return Response({"error": "Datos incompletos"}, status=400)
@@ -169,15 +193,39 @@ def iniciar_pago(request):
     except Pedido.DoesNotExist:
         return Response({"error": "Pedido no encontrado"}, status=404)
 
-    # Simular pago aprobado automáticamente
+    # Actualizar información del pedido
+    pedido.nombre = nombre if nombre else pedido.nombre
+    pedido.email = email if email else pedido.email
+    pedido.direccion = direccion if direccion else pedido.direccion
     pedido.estado = "pagado"
+    
+    # ← NUEVO: Descontar inventario automáticamente
+    for item in pedido.carrito:
+        try:
+            producto = Producto.objects.get(id=item['id'])
+            cantidad_comprada = item.get('cantidad', 1)
+            
+            # Verificar que hay suficiente stock
+            if producto.stock >= cantidad_comprada:
+                producto.stock -= cantidad_comprada
+                producto.save()
+                print(f"✅ Inventario actualizado: {producto.nombre} - Stock restante: {producto.stock}")
+            else:
+                print(f"⚠️ Stock insuficiente para {producto.nombre}: solicitado {cantidad_comprada}, disponible {producto.stock}")
+        except Producto.DoesNotExist:
+            print(f"❌ Producto {item['id']} no encontrado")
+            continue
+    
     pedido.save()
 
-    # Devuelve también el carrito
+    print(f"💾 Pedido guardado - Email: {pedido.email}, Dirección: {pedido.direccion}")
+
     return Response({
         "mensaje": "Pago aprobado",
         "numero_pedido": pedido.numero_pedido,
         "nombre": pedido.nombre,
+        "email": pedido.email,
+        "direccion": pedido.direccion,
         "total": pedido.total,
         "carrito": pedido.carrito
     })
