@@ -1,12 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router'; 
 import { CheckoutService } from '../services/checkout.service';
+import { CarritoService } from '../services/carrito.service';
 
 @Component({
   selector: 'app-consulta-pedido',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './consulta-pedido.html',
 })
 export class ConsultaPedidoComponent {
@@ -14,8 +16,17 @@ export class ConsultaPedidoComponent {
   pedido: any = null;
   error: string = '';
   buscando: boolean = false;
+  cantidadCarrito: number = 0;
 
-  constructor(private checkoutService: CheckoutService) {}
+  constructor(private checkoutService: CheckoutService, private carritoService: CarritoService) {}
+
+  ngOnInit() {
+    this.carritoService.carrito$.subscribe(productos => {
+      this.cantidadCarrito = productos.reduce((total, p) => total + p.cantidad, 0);
+    });
+    const carritoActual = this.carritoService.obtenerCarrito();
+    this.cantidadCarrito = carritoActual.reduce((total, p) => total + p.cantidad, 0);
+  }
 
   buscarPedido() {
     if (!this.numeroPedido.trim()) {

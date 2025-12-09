@@ -26,6 +26,32 @@ export class CarritoService {
     localStorage.setItem('carrito', JSON.stringify(this.carrito));
   }
 
+  // ← NUEVA FUNCIÓN: Aumentar cantidad
+  aumentarCantidad(id: number) {
+    const producto = this.carrito.find(p => p.id === id);
+    if (producto) {
+      producto.cantidad++;
+      this.carritoSubject.next(this.carrito);
+      localStorage.setItem('carrito', JSON.stringify(this.carrito));
+    }
+  }
+
+  // ← NUEVA FUNCIÓN: Disminuir cantidad
+  disminuirCantidad(id: number) {
+    const producto = this.carrito.find(p => p.id === id);
+    if (producto) {
+      if (producto.cantidad > 1) {
+        producto.cantidad--;
+      } else {
+        // Si la cantidad llega a 0, eliminar el producto
+        this.eliminarProducto(id);
+        return;
+      }
+      this.carritoSubject.next(this.carrito);
+      localStorage.setItem('carrito', JSON.stringify(this.carrito));
+    }
+  }
+
   eliminarProducto(id: number) {
     this.carrito = this.carrito.filter(p => p.id !== id);
     this.carritoSubject.next(this.carrito);

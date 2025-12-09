@@ -1,11 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CheckoutService } from '../services/checkout.service';
+import { CarritoService } from '../services/carrito.service'; // ← AGREGAR
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import emailjs from '@emailjs/browser';
-import { Producto } from '../services/productos.service';
-
 
 @Component({
   selector: 'app-checkout',
@@ -13,7 +12,7 @@ import { Producto } from '../services/productos.service';
   templateUrl: './checkout.html',
   imports: [CommonModule, FormsModule],
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit {
 
   datos = {
     nombre: '',
@@ -31,8 +30,17 @@ export class CheckoutComponent {
 
   constructor(
     private checkoutService: CheckoutService,
+    private carritoService: CarritoService, // ← AGREGAR
     private router: Router
   ) {}
+
+  ngOnInit() {
+    // Calcular el total automáticamente del carrito
+    const carrito = this.carritoService.obtenerCarrito();
+    this.datos.total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+    
+    console.log('Total calculado del carrito:', this.datos.total);
+  }
 
   pagar() {
     this.cargando = true;
@@ -53,7 +61,9 @@ export class CheckoutComponent {
     this.checkoutService.confirmarPago({
       numero_pedido: numero_pedido,
       total: this.datos.total,
-      nombre: this.datos.nombre
+      nombre: this.datos.nombre,
+      email: this.datos.email,        
+      direccion: this.datos.direccion
     })
     .subscribe({
       next: (resp) => {
@@ -63,6 +73,8 @@ export class CheckoutComponent {
         const recibo = {
           numero_pedido: numero_pedido,
           nombre: this.datos.nombre,
+          email: this.datos.email,
+          direccion: this.datos.direccion,
           total: this.datos.total,
           fecha: new Date().toLocaleDateString('es-CO'),
           carrito: resp.carrito || [], 
@@ -72,31 +84,32 @@ export class CheckoutComponent {
         console.log('Recibo completo a enviar:', recibo);
 
         // parámetros de EmailJS
-      const templateParams = {
-        to_name: recibo.nombre,
-        to_email: this.datos.email,
-        numero_pedido: recibo.numero_pedido,
-        fecha: recibo.fecha,
-        direccion: recibo.direccion,
-        total: recibo.total,
-        productos: (recibo.carrito || []).map((item: any) => {
+        const templateParams = {
+          to_name: recibo.nombre,
+          to_email: this.datos.email,
+          numero_pedido: recibo.numero_pedido,
+          fecha: recibo.fecha,
+          direccion: this.datos.direccion,
+          total: recibo.total,
+          productos: (recibo.carrito || []).map((item: any) => {
             const nombre = item.nombre || item.producto || 'Producto';
             const cantidad = item.cantidad || 1;
             const precio = item.precio || item.precio_unitario || 0;
 
             return `
-                <tr>
-                    <td>${nombre}</td>
-                    <td style="text-align: center;">${cantidad}</td>
-                    <td style="text-align: right;">COP $${precio}</td>
-                </tr>
-        `;}).join('')
-      };
+              <tr>
+                <td>${nombre}</td>
+                <td style="text-align: center;">${cantidad}</td>
+                <td style="text-align: right;">COP $${precio.toLocaleString('es-CO')}</td>
+              </tr>
+            `;
+          }).join('')
+        };
 
-      // envio del correo
-      emailjs.send(this.EMAILJS_SERVICE_ID, this.EMAILJS_TEMPLATE_ID, templateParams, this.EMAILJS_PUBLIC_KEY)
-        .then(response => console.log('Correo enviado', response.status, response.text))
-        .catch(err => console.error('Error enviando correo', err));
+        // envio del correo
+        emailjs.send(this.EMAILJS_SERVICE_ID, this.EMAILJS_TEMPLATE_ID, templateParams, this.EMAILJS_PUBLIC_KEY)
+          .then(response => console.log('Correo enviado', response.status, response.text))
+          .catch(err => console.error('Error enviando correo', err));
 
         // Guardar en localStorage como respaldo
         localStorage.setItem('ultimo_recibo', JSON.stringify(recibo));
